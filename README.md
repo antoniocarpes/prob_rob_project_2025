@@ -58,44 +58,43 @@ This module implements a least squares calibration system for tricycle robot kin
 - **Purpose:** Extracts pose vector from transformation matrix  
 - **Input:** 3×3 transformation matrix  
 - **Output:** `[x, y, theta]` vector  
-- **Key Point:** Inverse operation of `v2t()`, uses `atan2` for robust angle extraction  
+- **Key Point:** Inverse operation of `v2t()`, uses `atan2` for the angle extraction  
 
 **invert_isometry(T)**  
-- **Purpose:** Efficiently computes inverse of rigid body transformation  
+- **Purpose:** Computes inverse of an isometry
 - **Math:** For rotation R and translation t:  
-  `T⁻¹ = [Rᵀ, -Rᵀt; 0, 1]`  
-- **Key Point:** More efficient than general matrix inversion for isometric transforms  
+  `T⁻¹ = [Rᵀ, -Rᵀt; 0, 1]`   
 
 ### Motion Model Functions
 
 **h_odom_robot(traction_tick, steer_tick, X, theta_prev)**  
-- **Purpose:** Core kinematic model implementing tricycle motion equations  
+- **Purpose:** Kinematic model implementing tricycle motion equations  
 - **Parameters:**  
-  `X = [Ksteer, Ktraction, base_line, steer_offset, X_0, Y_0, Theta_0]` - calibration parameters  
+  `X = [Ksteer, Ktraction, base_line, steer_offset, X_0, Y_0, Theta_0]` - calibration parameters whose values we need to find
   Encoder readings and previous robot orientation  
 
 - **Tricycle Model Logic:**  
   - Straight motion (small steering): Linear displacement  
   - Curved motion: Circular arc with radius `R = baseline / tan(steering_angle)`  
-  - Sensor transformation: Accounts for sensor mounting offset relative to robot base  
+  - Sensor transformation: take care of sensor mounting offset relative to robot base  
 
-- **Key Point:** This is the forward model that predicts robot motion from encoder readings  
+- **Key Point:** This is the forward model that predicts robot motion from encoder readings. It allows us to estimate the trajectory based on the current estimate of the calibrations parameters, so as to iteratively reach the optimal values by comparing with the ground truth trajectory 
 
 **compute_trajectory(traction_ticks, steer_ticks, X)**  
-- **Purpose:** Integrates individual motions to build complete trajectory  
+- **Purpose:** Integrates individual motions to build the trajectory  
 - **Process:**  
   - Start at origin  
-  - For each time step: compute motion increment and update global pose  
+  - For each time step: compute motion increment and update global robot pose  
   - Track robot orientation for next iteration
-  - We compute the delta in sensor as (sensor_to_robot)^{-1} * delta_robot_pose * sensor_to_robot because this way we can expres the delta of the sensor pose in terms of the delta_robot_pose, which we can easily compute with the cinematic model of the robot. 
+  - Then, we compute the delta in sensor as (sensor_to_robot)^{-1} * delta_robot_pose * sensor_to_robot because this way we can expres the delta of the sensor pose in terms of the delta_robot_pose, which we have easily computed in the function with the cinematic model of the robot and the tick readings. 
 
-- **Key Point:** Transforms cumulative encoder data into robot path  
+- **Key Point:** We transform cumulative encoder data into robot path 
 
 ### Calibration Functions
 
 **error_jacobian(trajectory, delta_Z, X, traction_ticks, steer_ticks)**  
 - **Purpose:** Computes prediction errors and parameter sensitivities  
-- **Error Calculation:** `error = predicted_motion - measured_motion (with box minus)`  
+- **Error Calculation:** `error = predicted_motion - measured_motion (with box minus substraction)`  
 - **Jacobian:** Numerical derivatives ∂error/∂parameter using finite differences  
 - **Key Point:** Provides both the cost function and optimization gradients  
 
