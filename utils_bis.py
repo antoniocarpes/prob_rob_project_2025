@@ -88,7 +88,7 @@ def error_jacobian(trajectory, delta_Z, X, traction_ticks, steer_ticks):
 
     return np.array(e), np.vstack(J)
 
-def ls_calibration(traction_ticks, steer_ticks, delta_Z, X_guess, max_iter=10):
+def ls_calibration(traction_ticks, steer_ticks, delta_Z, X_guess, max_iter=200):
     X = X_guess.copy()
     for _ in range(max_iter):
         trajectory = compute_trajectory(traction_ticks, steer_ticks, X)
