@@ -86,7 +86,8 @@ This module implements a least squares calibration system for tricycle robot kin
 - **Process:**  
   - Start at origin  
   - For each time step: compute motion increment and update global pose  
-  - Track robot orientation for next iteration  
+  - Track robot orientation for next iteration
+  - We compute the delta in sensor as (sensor_to_robot)^{-1} * delta_robot_pose * sensor_to_robot because this way we can expres the delta of the sensor pose in terms of the delta_robot_pose, which we can easily compute with the cinematic model of the robot. 
 
 - **Key Point:** Transforms cumulative encoder data into robot path  
 
@@ -94,7 +95,7 @@ This module implements a least squares calibration system for tricycle robot kin
 
 **error_jacobian(trajectory, delta_Z, X, traction_ticks, steer_ticks)**  
 - **Purpose:** Computes prediction errors and parameter sensitivities  
-- **Error Calculation:** `error = predicted_motion - measured_motion`  
+- **Error Calculation:** `error = predicted_motion - measured_motion (with box minus)`  
 - **Jacobian:** Numerical derivatives ∂error/∂parameter using finite differences  
 - **Key Point:** Provides both the cost function and optimization gradients  
 
@@ -111,9 +112,10 @@ This module implements a least squares calibration system for tricycle robot kin
 
 In the main_bis.py file we include the code to actually solve the problem, by loading the preprocessed dataset, using the initial guess and calling the least squares function. We also plot the ground truth trajectory and the solution one after getting this values as a result:
 
-[ 1.00019342e-01  1.05985333e-02  1.39819785e+00 -3.97987022e-06
- -1.42010415e-01  3.25941623e-02 -1.95011963e-02]
+[1.00030823e-01,  1.04827303e-02,  1.39065842e+00, -6.95239342e-05, -1.04696788e-01, -2.02982326e-02, -7.70417828e-02]
 
- By plotting the `optimal` trajectory, one sees that the result is not as expected, which shows some error in the solution that I have not been able to find.
+![Solution trajectory](images/solution.png)
 
- ![Solution trajectory](images/solution.png)
+ By plotting the `optimal` trajectory, one sees that the result is not as expected, which shows some error in the solution that I have not been able to find. I believe this might come from a bad cinematic model or a bad preprocessing of the dataset. However, after reviewing I have not been able to figure out the source of my error.
+
+
